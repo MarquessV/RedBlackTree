@@ -139,7 +139,7 @@ node<T>* red_black_tree<T>::insert_repair_tree(node<T>* n)
   }
   node<T>* u = uncle(n);
   node<T>* gp = n->parent->parent;
-  //case3: parent is red, uncle doesn't exist
+  //case3: parent is red, uncle is black (or doesn't exist)
   if(p->isRed && (!u || u->isBlack())) {
     if(p == gp->left) {
       if(n == p->left) {
@@ -175,7 +175,7 @@ node<T>* red_black_tree<T>::insert_repair_tree(node<T>* n)
         gp->left = p->right = nullptr;
         gp->isRed = true;
         n->isRed = false;
-        insert_repair_tree(n);
+        //insert_repair_tree(n);
       }
     }
     else {
@@ -211,31 +211,12 @@ node<T>* red_black_tree<T>::insert_repair_tree(node<T>* n)
         gp->right = nullptr;
         p->isRed = false;
         gp->isRed = true;
-        insert_repair_tree(p);
+        //insert_repair_tree(p);
       }
     }
     return n;
   }
-  //case4: parent is red, uncle is black
-  if(false) {
-    if(n == gp->left->right) {
-      rotate_left(p);
-      n = n->left;
-    }
-    else if(n == gp->right->left) {
-      rotate_right(p);
-      n = n->right;
-    }
-    if(n == p->left) {
-      rotate_right(gp);
-    }
-    else {
-      rotate_left(gp);
-    }
-    p->isRed = false;
-    gp->isRed = true;
-  } 
-  //case5: parent is red, uncle is red
+  //case4: parent is red, uncle is red
   else {
     p->isRed = false;
     u->isRed = false;
