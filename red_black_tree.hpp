@@ -141,13 +141,8 @@ class red_black_tree {
        
         ~red_black_tree_node()
         {
-          if(this->left) {
-            delete this->left;
-          }
-          if(this->right) {
-            delete this->right;
-          }
-          delete this;
+          delete left;
+          delete right;
         }
     };
     
@@ -287,6 +282,7 @@ class red_black_tree {
     }
 
     ~red_black_tree() {
+      delete root;
     }
 
 };
