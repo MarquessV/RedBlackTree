@@ -1,274 +1,294 @@
+/**
+ *  red_black_tree.hpp
+ *  An implementation of a red black tree.
+ *
+ *  @author Marquess Valdez
+ *  @version 1.0
+ */
+
 #ifndef RED_BLACK_TREE_HPP
 #define RED_BLACK_TREE_HPP
 
-#include "node.hpp"
+#include <cstddef> //for std::size_t
 #include <vector>
-
-#include <iostream>
 
 using namespace std;
 
-template <class T>
+template <typename T>
 class red_black_tree {
+  private:
+    class red_black_tree_node {
+      public:
+        T data;
+        enum Color {red = 0, black = 1}; 
+        Color color;
+        red_black_tree_node *parent;
+        red_black_tree_node *left;
+        red_black_tree_node *right;
+
+        // Default constructor
+        red_black_tree_node() : color(red), parent(nullptr), left(nullptr), right(nullptr) {};
+        // Construct a node with data, black by default since if a parent isn't known this will probably be used for the root.
+        red_black_tree_node(const T& d) : data(d), color(red), parent(nullptr), left(nullptr), right(nullptr) {}
+        // Construct a node with data and parent, red by default since this will probably be used for an insertion not at the root.
+        red_black_tree_node(const T& d, red_black_tree_node *p) : data(d), color(red), parent(p), left(nullptr), right(nullptr) {};
+        // Construct a node where everything is known.
+        red_black_tree_node(const T& d, Color c, red_black_tree_node *p, red_black_tree_node *l, red_black_tree_node *r) : data(d), color(red), parent(p), left(l), right(r) {};
+
+        inline T getData()
+        {
+          return this->data;
+        }
+
+        inline bool isBlack()
+        {
+          return this->color == black;
+        }
+
+        inline bool isRed()
+        {
+          return this->color == red;
+        }
+
+        inline void setBlack()
+        {
+          this->color = black;
+        }
+
+        inline void setRed()
+        {
+          this->color = red;
+        }
+
+        inline red_black_tree_node* getParent()
+        {
+          return this->parent;
+        }
+
+        inline red_black_tree_node* getSibling()
+        {
+          red_black_tree_node* p = this->getParent();
+          if(p) {
+            if(p->left == this) {
+              return p->right;
+            }
+            return p->left;
+          }
+          return nullptr;
+        }
+
+        inline red_black_tree_node* getGrandparent()
+        {
+          if(this->parent) {
+            return this->parent->parent;
+          }
+          return nullptr;
+        }
+
+        inline red_black_tree_node* getUncle()
+        {
+          red_black_tree_node* gp = this->getGrandparent();
+          if(gp) {
+            if(gp->left == this->parent) {
+              return gp->right;
+            }
+            return gp->left;
+          }
+          return nullptr;
+        }
+
+        inline void rotateLeft()
+        {
+          if(this->right) {
+            red_black_tree_node* nn = this->right;
+            if(this->parent) {
+              if(this->parent->left == this) {
+                this->parent->left = nn; 
+              } else {
+                this->parent->right = nn;
+              }
+            }
+            nn->parent = this->parent;
+            this->parent = nn;
+            this->right = nn->left;
+            nn->left = this;
+            if(this->right) {
+              this->right->parent = this;
+            }
+          }
+        }
+
+        inline void rotateRight()
+        {
+          if(this->left) {
+            red_black_tree_node* nn = this->left;
+            if(this->parent) {
+              if(this->parent->right == this) {
+                this->parent->right = nn;
+              } else {
+                this->parent->left = nn;
+              }
+            }
+            nn->parent = this->parent;
+            this->parent = nn;
+            this->left = nn->right;
+            nn->right = this;
+            if(this->left) {
+              this->left->parent = this;
+            }
+          }
+        }
+       
+        ~red_black_tree_node()
+        {
+          if(this->left) {
+            delete this->left;
+          }
+          if(this->right) {
+            delete this->right;
+          }
+          delete this;
+        }
+    };
+    
+    red_black_tree_node *root;
+    size_t _size;
+
   public:
-    node<T>* root;
-    unsigned int sze;
-    red_black_tree();
-    red_black_tree(T&);
-    red_black_tree(vector<T>&);
+    red_black_tree() : root(nullptr), _size(0) {}
 
-    unsigned int size();
+    red_black_tree(vector<T>& data)
+    {
+      root = nullptr;
+      _size = 0;
+      for(T d : data) {
+        insert(d);
+      } 
+    }
 
-    node<T>* parent(node<T>*);
-    node<T>* grandparent(node<T>*);
-    node<T>* uncle(node<T>*);
+    /**
+     *  Inserts a single piece of data into the tree.
+     *  @param d the data to insert. 
+     *  @returns true if new node was created and inserted and 
+     *  false if a node with the data already existed in tree.
+     */
+    bool insert(const T& d)
+    {
+      // First we find the position of the node.
+      red_black_tree_node *node = root, *parent = nullptr;
+      bool lastLeft;
+      while(node) {
+        parent = node;
+        if(node->data == d) { // A node with the data already exists.
+          return false;       // So we return false;
+        } else if(node->data > d) {
+          node = node->left;
+          lastLeft = true;
+        } else {
+          node = node->right; 
+          lastLeft = false;
+        }
+      }
+      // Then we create the node.
+      node = new red_black_tree_node(d, parent);
+      _size++;
+      if(parent && lastLeft) { // And set the children properly. Notice, we check for existence of the parent, in case
+        parent->left = node;   // this node is the root node.
+      }
+      else if(parent) {
+        parent->right = node;
+      }
+      insert_repair(node);    // Repair balance to the tree.
+      return true;
+    }
 
-    node<T>* find(T&);
-    void rotate_left(node<T>*);
-    void rotate_right(node<T>*);
-    node<T>* insert_repair_tree(node<T>*);
-    node<T>* insert(T&);
-    bool remove(T&);
+    void insert_repair(red_black_tree_node* node)
+    {
+      red_black_tree_node *parent = node->getParent();
+      // Case 1: node is the root node, it must be set to black.
+      if(!parent) {
+        node->setBlack();
+        root = node;
+        return;
+      }
+      // Case 2: The parent of node is black, theres nothing to be done.
+      if(parent->isBlack()) {
+        return;
+      }
+      red_black_tree_node *grandparent = node->getGrandparent(), *uncle = node->getUncle();
+      // Case 3: The parent is red and the uncle is black
+      if(!uncle || uncle->isBlack()) {
+        // Goal: Rotate parent into grandparent position
+        // Part 1: If node is on the "inside" of the tree, we need to rotate it to the outside first.
+        if(grandparent->left && node == grandparent->left->right) {
+          parent->rotateLeft();
+          node = node->right;
+        } else if(grandparent->right && node == grandparent->right->left) {
+          parent->rotateRight(); 
+          node = node->left;
+        }
+        // Part 2: Now we can rotate the parent into place by rotating in the correct direction.
+        if(node == parent->left) {
+          grandparent->rotateRight(); // Parent is the left child of grandparent, so we rotate the grandparent right.
+        } else {
+          grandparent->rotateLeft();  // Parent is the right child of grandparent, so we rotate the grandparent left.
+        }
+        // Finally, we make the parent and grandparent the appropriate colors and return true.
+        parent->setBlack();
+        grandparent->setRed();
+        if(grandparent == root) {
+          root = parent;
+        }
+        return;
+      }
+      //Case 4: The parent and uncle are both red
+      parent->setBlack();
+      uncle->setBlack();
+      grandparent->setRed();
+    }
+
+    /**
+     *  Removes a single piece of data from the tree.
+     *  @param d the data to remove.
+     *  @returns true if the node with data was removed and false if a node with
+     *  data didn't exist in the tree.
+     */
+    bool remove(const T& d)
+    {
+      //TODO
+      return true;   
+    }
+
+    /**
+     *  Checks if data is in the tree.
+     *  @param d the data to find.
+     *  @returns true if node with data was found and false otherwise.
+     */
+    inline bool find(const T& d)
+    {
+      red_black_tree_node* curr = root;
+      while(curr) {
+        if(curr->data == d) {
+          return true;
+        }
+        if(curr->data > d) {
+          curr = curr->left;
+        }
+        else {
+          curr = curr->right;
+        }
+      }
+      return false;
+    }
+
+    inline size_t size()
+    {
+      return _size;
+    }
+
+    ~red_black_tree() {
+    }
+
 };
-
-template<class T>
-red_black_tree<T>::red_black_tree() : root(nullptr), sze(0) {}
-
-template<class T>
-red_black_tree<T>::red_black_tree(T& d)
-{
-  root = new node<T>*(d);
-  sze = 1; 
-}
-
-template<class T>
-red_black_tree<T>::red_black_tree(vector<T>& data)
-{
-  root = nullptr;
-  sze = 0;
-  for(T d : data) {
-    insert(d);
-  }
-}
-
-template<class T>
-unsigned int red_black_tree<T>::size()
-{
-  return sze;
-}
-
-template<class T>
-node<T>* red_black_tree<T>::parent(node<T>* child)
-{
-  if(child) {
-    return child->parent;
-  }
-  return nullptr;
-}
-
-template<class T>
-node<T>* red_black_tree<T>::grandparent(node<T>* child)
-{
-  if(child && child->parent) {
-    return child->parent->parent;
-  }
-  return nullptr;
-}
-
-template<class T>
-node<T>* red_black_tree<T>::uncle(node<T>* child)
-{
-  node<T>* gp = grandparent(child);
-  if(gp) {
-    if(gp->left == parent(child)) {
-      return gp->right;
-    }
-    return gp->left;
-  }
-  return nullptr;
-}
-
-template<class T>
-node<T>* red_black_tree<T>::find(T& target)
-{
-  node<T>* curr = root;
-  while(curr != nullptr && curr->data != target) {
-    if(target > curr->data) {
-      curr = curr->right;
-    }
-    else {
-      curr = curr->left;
-    }
-  }
-  return curr;
-}
-
-template<class T>
-void red_black_tree<T>::rotate_left(node<T>* n)
-{
-  node<T>* newnode = n->right;
-  n->right = newnode->left;
-  newnode->left = n;
-  newnode->parent = n->parent;
-  n->parent = newnode;
-}
-
-template<class T>
-void red_black_tree<T>::rotate_right(node<T>* n)
-{
-  node<T>* newnode = n->left;
-  n->left = newnode->right;
-  newnode->right = n;
-  newnode->parent = n->parent;
-  n->parent = newnode;
-}
-
-template<class T>
-node<T>* red_black_tree<T>::insert_repair_tree(node<T>* n)
-{
-  node<T>* p = parent(n);
-  //case1: n is root, it must be black.
-  if(!p) {
-    n->isRed = false;
-    root = n;
-    return n;
-  }
-  //case2: parent is black - nothing needs to be done.
-  if(p->isBlack()) {
-    return n;
-  }
-  node<T>* u = uncle(n);
-  node<T>* gp = n->parent->parent;
-  //case3: parent is red, uncle is black (or doesn't exist)
-  if(p->isRed && (!u || u->isBlack())) {
-    if(p == gp->left) {
-      if(n == p->left) {
-        p->parent = gp->parent;
-        p->right = gp;
-        if(gp->parent) {
-          if(gp->parent->left == gp) {
-            gp->parent->left = p;
-          }
-          else {
-            gp->parent->right = p;
-          }
-        }
-        gp->parent = p;
-        gp->left = nullptr;    
-        p->isRed = false;
-        gp->isRed = true;
-        insert_repair_tree(p);
-      }
-      else {
-        n->left = p;
-        n->right = gp;
-        n->parent = gp->parent;
-        if(gp->parent) {
-          if(gp->parent->left == gp) {
-            gp->parent->left = p;
-          }
-          else {
-            gp->parent->right = p;
-          }
-        }
-        gp->parent = p->parent = n;
-        gp->left = p->right = nullptr;
-        gp->isRed = true;
-        n->isRed = false;
-        //insert_repair_tree(n);
-      }
-    }
-    else {
-      if(n == p->left) {
-        n->left = gp;
-        p->parent = gp->parent;
-        if(gp->parent) {
-          if(gp->parent->left == gp) {
-            gp->parent->left = p;
-          }
-          else {
-            gp->parent->right = p;
-          }
-        }
-        gp->parent = n;
-        gp->right = nullptr;
-        p->isRed = false;
-        gp->isRed = true;
-        insert_repair_tree(gp);
-      }
-      else {
-        p->left = gp;
-        p->parent = gp->parent;
-        if(gp->parent) {
-          if(gp->parent->left == gp) {
-            gp->parent->left = p;
-          }
-          else {
-            gp->parent->right = p;
-          }
-        }
-        gp->parent = p;
-        gp->right = nullptr;
-        p->isRed = false;
-        gp->isRed = true;
-        //insert_repair_tree(p);
-      }
-    }
-    return n;
-  }
-  //case4: parent is red, uncle is red
-  else {
-    p->isRed = false;
-    u->isRed = false;
-    gp->isRed = true;
-    insert_repair_tree(gp); 
-    return n;
-  }
-}
-
-
-template<class T>
-node<T>* red_black_tree<T>::insert(T& data)
-{
-  if(!root) {
-    sze++;
-    return (root = new node<T>(data));
-  } 
-  node<T>* curr = root;
-  node<T>* pred = root;
-  bool wentRight;
-  while(curr) {
-    if(data == curr->data) {
-      return curr;
-    }
-    pred = curr;
-    if(data > curr->data) {
-      curr = curr->right;
-      wentRight = true;
-    }
-    else {
-      curr = curr->left;
-      wentRight = false;
-    }
-  }
-  curr = new node<T>(pred, data);
-  if(wentRight) {
-    pred->right = curr;
-  }
-  else {
-    pred->left = curr;
-  }
-  insert_repair_tree(curr);
-  sze++;
-  return curr;
-}
-
-template<class T>
-bool red_black_tree<T>::remove(T& target)
-{
-  //TODO
-  return true;
-}
-
 
 #endif
