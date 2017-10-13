@@ -5,12 +5,11 @@
  *  @author Marquess Valdez
  *  @version 1.0
  */
-
 #ifndef RED_BLACK_TREE_HPP
 #define RED_BLACK_TREE_HPP
 
 #include <cstddef> //for std::size_t
-#include <vector>
+#include <vector>  //for std::vector
 
 using namespace std;
 
@@ -149,6 +148,14 @@ class red_black_tree {
     red_black_tree_node *root;
     size_t _size;
 
+    int height(red_black_tree_node* node)
+    {
+      if(!node) {
+        return -1;
+      }
+      return 1 + max(height(node->right), height(node->left));
+    }
+
   public:
     red_black_tree() : root(nullptr), _size(0) {}
 
@@ -286,6 +293,12 @@ class red_black_tree {
     {
       return _size;
     }
+
+    int height()
+    {
+      return height(root);
+    }
+
 
     /**
      *  @returns a vector<pair<T,bool>> of the tree in-order where [i].second is true if the node was black.

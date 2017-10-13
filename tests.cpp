@@ -24,11 +24,13 @@ TEST(InsertTest, InsertCorrectness) {
   vector<pair<int, bool>> verify7 = { {4, true}, {2, true}, {1, false}, {3, false}, {6, false}, {5, true}, {7, true}, {8, false} };
   vector<pair<int, bool>> dump;
   tree.insert(nums[0]);
+  ASSERT_EQ(tree.height(), 0);
   dump = tree.dump();
   ASSERT_EQ(verify0.size(), dump.size());
   ASSERT_EQ(verify0[0], dump[0]);
 
   tree.insert(nums[1]);
+  ASSERT_EQ(tree.height(), 1);
   dump = tree.dump();
   ASSERT_EQ(verify1.size(), dump.size());
   for(int i = 0; i < 2; i++) {
@@ -36,6 +38,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[2]);
+  ASSERT_EQ(tree.height(), 1);
   dump = tree.dump();
   ASSERT_EQ(verify2.size(), dump.size());
   for(int i = 0; i < 3; i++) {
@@ -43,6 +46,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[3]);
+  ASSERT_EQ(tree.height(), 2);
   dump = tree.dump();
   ASSERT_EQ(verify3.size(), dump.size());
   for(int i = 0; i < 4; i++) {
@@ -50,6 +54,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[4]);
+  ASSERT_EQ(tree.height(), 2);
   dump = tree.dump();
   ASSERT_EQ(verify4.size(), dump.size());
   for(int i = 0; i < 5; i++) {
@@ -57,6 +62,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[5]);
+  ASSERT_EQ(tree.height(), 2);
   dump = tree.dump();
   ASSERT_EQ(verify5.size(), dump.size());
   for(int i = 0; i < 6; i++) {
@@ -64,6 +70,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[6]);
+  ASSERT_EQ(tree.height(), 2);
   dump = tree.dump();
   ASSERT_EQ(verify6.size(), dump.size());
   for(int i = 0; i < 7; i++) {
@@ -71,6 +78,7 @@ TEST(InsertTest, InsertCorrectness) {
   }
 
   tree.insert(nums[7]);
+  ASSERT_EQ(tree.height(), 3);
   dump = tree.dump();
   ASSERT_EQ(verify7.size(), dump.size());
   for(int i = 0; i < 8; i++) {
