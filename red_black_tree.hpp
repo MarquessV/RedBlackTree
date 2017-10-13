@@ -217,11 +217,13 @@ class red_black_tree {
         // Part 1: If node is on the "inside" of the tree, we need to rotate it to the outside first.
         if(grandparent->left && node == grandparent->left->right) {
           parent->rotateLeft();
-          node = node->right;
+          node = node->left;
         } else if(grandparent->right && node == grandparent->right->left) {
           parent->rotateRight(); 
-          node = node->left;
+          node = node->right;
         }
+        parent = node->getParent();
+        grandparent = node->getGrandparent();
         // Part 2: Now we can rotate the parent into place by rotating in the correct direction.
         if(node == parent->left) {
           grandparent->rotateRight(); // Parent is the left child of grandparent, so we rotate the grandparent right.
@@ -240,6 +242,7 @@ class red_black_tree {
       parent->setBlack();
       uncle->setBlack();
       grandparent->setRed();
+      insert_repair(grandparent);
     }
 
     /**
@@ -276,9 +279,41 @@ class red_black_tree {
       return false;
     }
 
+    /**
+     *  @returns the size of the tree.
+     */
     inline size_t size()
     {
       return _size;
+    }
+
+    /**
+     *  @returns a vector<pair<T,bool>> of the tree in-order where [i].second is true if the node was black.
+     */
+    vector<pair<T,bool>> dump()
+    {
+      vector<pair<T,bool>> out;
+      red_black_tree_node *curr = root;
+      while(curr) {
+        if(!curr->left) {
+          out.push_back(make_pair(curr->data, curr->isBlack()));
+          curr = curr->right;
+        } else {
+          red_black_tree_node *pre = curr->left;
+          while(pre->right && pre->right != curr) {
+            pre = pre->right;
+          }
+          if(!pre->right) {
+            pre->right = curr;
+            out.push_back(make_pair(curr->data, curr->isBlack()));
+            curr = curr->left;
+          } else {
+            pre->right = nullptr;
+            curr = curr->right;
+          }
+        }
+      }
+      return out;
     }
 
     ~red_black_tree() {

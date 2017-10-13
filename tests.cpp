@@ -13,9 +13,69 @@ TEST(InsertTest, InsertFind) {
 
 TEST(InsertTest, InsertCorrectness) {
   vector<int> nums = {5, 4, 1, 3, 2, 6, 7, 8};
-  red_black_tree<int> tree(nums);
-  ASSERT_EQ(nums.size(), tree.size());
+  red_black_tree<int> tree;
+  vector<pair<int, bool>> verify0 = { {5, true} };
+  vector<pair<int, bool>> verify1 = { {5, true}, {4, false} };
+  vector<pair<int, bool>> verify2 = { {4, true}, {1, false}, {5, false} };
+  vector<pair<int, bool>> verify3 = { {4, true}, {1, true}, {3, false}, {5, true} };
+  vector<pair<int, bool>> verify4 = { {4, true}, {2, true}, {1, false}, {3, false}, {5, true} };
+  vector<pair<int, bool>> verify5 = { {4, true}, {2, true}, {1, false}, {3, false}, {5, true}, {6, false} };
+  vector<pair<int, bool>> verify6 = { {4, true}, {2, true}, {1, false}, {3, false}, {6, true}, {5, false}, {7, false} };
+  vector<pair<int, bool>> verify7 = { {4, true}, {2, true}, {1, false}, {3, false}, {6, false}, {5, true}, {7, true}, {8, false} };
+  vector<pair<int, bool>> dump;
+  tree.insert(nums[0]);
+  dump = tree.dump();
+  ASSERT_EQ(verify0.size(), dump.size());
+  ASSERT_EQ(verify0[0], dump[0]);
 
+  tree.insert(nums[1]);
+  dump = tree.dump();
+  ASSERT_EQ(verify1.size(), dump.size());
+  for(int i = 0; i < 2; i++) {
+    ASSERT_EQ(verify1[i], dump[i]);
+  }
+
+  tree.insert(nums[2]);
+  dump = tree.dump();
+  ASSERT_EQ(verify2.size(), dump.size());
+  for(int i = 0; i < 3; i++) {
+    ASSERT_EQ(verify2[i], dump[i]);
+  }
+
+  tree.insert(nums[3]);
+  dump = tree.dump();
+  ASSERT_EQ(verify3.size(), dump.size());
+  for(int i = 0; i < 4; i++) {
+    ASSERT_EQ(verify3[i], dump[i]);
+  }
+
+  tree.insert(nums[4]);
+  dump = tree.dump();
+  ASSERT_EQ(verify4.size(), dump.size());
+  for(int i = 0; i < 5; i++) {
+    ASSERT_EQ(verify4[i], dump[i]);
+  }
+
+  tree.insert(nums[5]);
+  dump = tree.dump();
+  ASSERT_EQ(verify5.size(), dump.size());
+  for(int i = 0; i < 6; i++) {
+    ASSERT_EQ(verify5[i], dump[i]);
+  }
+
+  tree.insert(nums[6]);
+  dump = tree.dump();
+  ASSERT_EQ(verify6.size(), dump.size());
+  for(int i = 0; i < 7; i++) {
+    ASSERT_EQ(verify6[i], dump[i]);
+  }
+
+  tree.insert(nums[7]);
+  dump = tree.dump();
+  ASSERT_EQ(verify7.size(), dump.size());
+  for(int i = 0; i < 8; i++) {
+    ASSERT_EQ(verify7[i], dump[i]);
+  }
   /*
   ASSERT_EQ(tree.root->data, 4);
   ASSERT_EQ(tree.root->isRed, false);
