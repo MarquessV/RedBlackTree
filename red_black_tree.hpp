@@ -28,7 +28,7 @@ class red_black_tree {
         // Default constructor
         red_black_tree_node() : color(red), parent(nullptr), left(nullptr), right(nullptr) {};
         // Construct a node with data, black by default since if a parent isn't known this will probably be used for the root.
-        red_black_tree_node(const T& d) : data(d), color(red), parent(nullptr), left(nullptr), right(nullptr) {}
+        explicit red_black_tree_node(const T& d) : data(d), color(red), parent(nullptr), left(nullptr), right(nullptr) {}
         // Construct a node with data and parent, red by default since this will probably be used for an insertion not at the root.
         red_black_tree_node(const T& d, red_black_tree_node *p) : data(d), color(red), parent(p), left(nullptr), right(nullptr) {};
         // Construct a node where everything is known.
@@ -96,6 +96,27 @@ class red_black_tree {
           return nullptr;
         }
 
+        inline red_black_tree_node* getSuccessor()
+        {
+          red_black_tree_node *p = this->parent; 
+          if(!p) {
+            p = this; 
+          }
+          if(p->right) {
+            p = p->right;
+            while(p->left) {
+              p = p->left;
+            }
+            return p;
+          }
+          red_black_tree_node *curr = this;
+          while(p->left != curr) {
+            curr = p;
+            p = p->parent;
+          }
+          return p;
+        }
+
         inline void rotateLeft()
         {
           if(this->right) {
@@ -156,54 +177,6 @@ class red_black_tree {
       return 1 + max(height(node->right), height(node->left));
     }
 
-  public:
-    red_black_tree() : root(nullptr), _size(0) {}
-
-    red_black_tree(vector<T>& data)
-    {
-      root = nullptr;
-      _size = 0;
-      for(T d : data) {
-        insert(d);
-      } 
-    }
-
-    /**
-     *  Inserts a single piece of data into the tree.
-     *  @param d the data to insert. 
-     *  @returns true if new node was created and inserted and 
-     *  false if a node with the data already existed in tree.
-     */
-    bool insert(const T& d)
-    {
-      // First we find the position of the node.
-      red_black_tree_node *node = root, *parent = nullptr;
-      bool lastLeft;
-      while(node) {
-        parent = node;
-        if(node->data == d) { // A node with the data already exists.
-          return false;       // So we return false;
-        } else if(node->data > d) {
-          node = node->left;
-          lastLeft = true;
-        } else {
-          node = node->right; 
-          lastLeft = false;
-        }
-      }
-      // Then we create the node.
-      node = new red_black_tree_node(d, parent);
-      _size++;
-      if(parent && lastLeft) { // And set the children properly. Notice, we check for existence of the parent, in case
-        parent->left = node;   // this node is the root node.
-      }
-      else if(parent) {
-        parent->right = node;
-      }
-      insert_repair(node);    // Repair balance to the tree.
-      return true;
-    }
-
     void insert_repair(red_black_tree_node* node)
     {
       red_black_tree_node *parent = node->getParent();
@@ -252,6 +225,139 @@ class red_black_tree {
       insert_repair(grandparent);
     }
 
+    void remove_repair(red_black_tree_node *node, red_black_tree_node *curr)
+    {
+      // curr hasn't been deleted yet so we use it here instead of node, since node isn't guaranteed to exist.
+      red_black_tree_node *parent = curr->parent, *sibling = curr->getSibling();
+      // Case 1: The node is the root: We just need to paint it black.
+      if(!parent) {
+        root = node;
+        if(node) { // Edge case, the node that we deleted was the only node, we will reach this case and node won't exist.
+          node->setBlack();
+        }
+        return;
+      } 
+      // Case 2: The nodes sibling is red.
+      if(sibling && sibling->isRed()) {
+        parent->setRed();
+        sibling->setBlack();
+        parent->rotateLeft();
+        if(root == parent) {
+          root = sibling;
+        }
+        // Since we've rotated, node has a new sibling and we upadte accordingly.
+        if(node) {
+          sibling = node->getSibling();
+        } else {
+          sibling = parent->left ? parent->left : parent->right;
+        }
+      }
+      // Case 3: The nodes parent is black, and both of siblings children is black.
+      if(parent->isBlack() && sibling && (!sibling->left || sibling->left->isBlack()) && (!sibling->right || sibling->right->isBlack())) {
+        sibling->setRed();                // We repaint the sibling red and recurse on the parent, since there is now
+        remove_repair(parent, parent);    // one less black node when passing through parent.
+        return;
+      }
+      // Case 4: The nodes parent is red, its sibling is black, and both its children are black
+      if(parent->isRed() && sibling && sibling->isBlack() && (!sibling->left || sibling->left->isBlack()) && (!sibling->right || sibling->right->isBlack())) {
+        parent->setBlack();   // By swapping colors, we've made up for the missing black node on the path of node, but
+        sibling->setRed();    // haven't effected the path through the sibling.
+        return;
+      }
+      // Case 5: The sibling is non null and black...
+      if(sibling && sibling->isBlack()) {
+        // With the node on its parents left side, and siblings right child black and its left child red.
+        if(parent->left == node && (!sibling->right || sibling->right->isBlack()) && sibling->left && sibling->left->isRed()) {
+          sibling->setRed();
+          sibling->left->setBlack();
+          sibling->rotateRight();
+          if(root == parent) {
+            root = parent->left;
+          } else if(parent->right == node && sibling->right && sibling->right->isRed() && (!sibling->left || sibling->left->isBlack())) {
+            sibling->setRed();
+            sibling->right->setBlack();
+            sibling->rotateLeft();
+            if(root == parent) {
+              root = parent->right;
+            }
+          }
+          // Again, since we (possibly) rotated, we update the sibling.
+          if(node) {
+            sibling = node->getSibling();
+          }
+          else {
+            sibling = parent->left ? parent->left : parent->right;
+          }
+        }  
+      }
+      // Case 6: Sibling is not null and black, and its right child is red.
+      if(sibling && sibling->isBlack() && sibling->right && sibling->right->isRed()) {
+        sibling->color = parent->color;
+        parent->setBlack();
+        sibling->right->setBlack();
+        if(parent->left == node) {
+          parent->rotateLeft();
+          if(root == parent) {
+            root = parent->right;
+          }
+        } else {
+          parent->rotateRight();
+          if(root == parent) {
+            root = parent->left;
+          }
+        }
+      }
+    }
+
+
+  public:
+    red_black_tree() : root(nullptr), _size(0) {}
+
+    explicit red_black_tree(vector<T>& data)
+    {
+      root = nullptr;
+      _size = 0;
+      for(T d : data) {
+        insert(d);
+      } 
+    }
+
+    /**
+     *  Inserts a single piece of data into the tree.
+     *  @param d the data to insert. 
+     *  @returns true if new node was created and inserted and 
+     *  false if a node with the data already existed in tree.
+     */
+    bool insert(const T& d)
+    {
+      // First we find the position of the node.
+      red_black_tree_node *node = root, *parent = nullptr;
+      bool lastLeft;
+      while(node) {
+        parent = node;
+        if(node->data == d) { // A node with the data already exists.
+          return false;       // So we return false;
+        } else if(node->data > d) {
+          node = node->left;
+          lastLeft = true;
+        } else {
+          node = node->right; 
+          lastLeft = false;
+        }
+      }
+      // Then we create the node.
+      node = new red_black_tree_node(d, parent);
+      _size++;
+      if(parent && lastLeft) { // And set the children properly. Notice, we check for existence of the parent, in case
+        parent->left = node;   // this node is the root node.
+      }
+      else if(parent) {
+        parent->right = node;
+      }
+      insert_repair(node);    // Repair balance to the tree.
+      return true;
+    }
+    
     /**
      *  Removes a single piece of data from the tree.
      *  @param d the data to remove.
@@ -260,8 +366,52 @@ class red_black_tree {
      */
     bool remove(const T& d)
     {
-      //TODO
-      return true;   
+      red_black_tree_node* curr = root;
+      while(curr && curr->data != d) {
+        if(curr->data > d) {
+          curr = curr->left;
+        } else {
+          curr = curr->right;
+        }
+      }
+      // If curr is null, there isn't a node with the data and we return false.
+      if(!curr) {
+        return false;
+      }
+      // If there are two non-null children, replace with the value of inorder successor and delete the successor.
+      if(curr->left && curr->right) {
+        red_black_tree_node *successor = curr->getSuccessor();
+        curr->data = successor->data;
+        if(successor->parent->left == successor) { // Null out the successors parent pointer to the successor.
+          successor->parent->left = nullptr;
+        } else {
+          successor->parent->right = nullptr;
+        }
+        curr = successor;
+      }
+      if(curr->isRed()) {
+        _size--;
+        delete curr;
+        return true;
+      }
+      // We replace the node with its child node.
+      red_black_tree_node *child = (curr->right ? curr->right : curr->left);
+      if(curr->parent->left == curr) {
+        curr->parent->left = child;
+      } else {
+        curr->parent->right = child;
+      }
+      if(!child || child->isBlack()) {  // If the child is black, we need to perform some number of the 6 "double-back" transformations.
+        remove_repair(child, curr); // Since multiple "repairs" may need to be done we use a seperate recursive function.
+      }
+      if(child) { // If the child wasn't a null node, we set the parent, and make sure its black.
+        child->parent = curr->parent;
+        child->setBlack();
+      }
+      // Finally, we delete the node.
+      _size--;
+      delete curr;
+      return true;
     }
 
     /**
@@ -294,14 +444,16 @@ class red_black_tree {
       return _size;
     }
 
+    /**
+     *  @returns the height of the ree.
+     */
     int height()
     {
       return height(root);
     }
 
-
     /**
-     *  @returns a vector<pair<T,bool>> of the tree in-order where [i].second is true if the node was black.
+     *  @returns a vector<pair<T,bool>> of the tree in-order where vector[i].second is true if the node was black.
      */
     vector<pair<T,bool>> dump()
     {

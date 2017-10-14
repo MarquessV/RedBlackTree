@@ -111,6 +111,19 @@ TEST(InsertTest, InsertCorrectness) {
   */
 }
 
+TEST(RemoveTest, RemoveSuccess) {
+  vector<int> nums = {5, 4, 1, 3, 2, 6, 7, 8};
+  red_black_tree<int> tree(nums);
+  for(unsigned int i = 0; i < nums.size(); i++) {
+    ASSERT_EQ(true, tree.remove(nums[i]));
+    ASSERT_EQ(false, tree.find(nums[i]));
+    ASSERT_EQ(nums.size()-i-1, tree.size());
+    for(unsigned int j = i+1; j < nums.size(); j++) {
+      ASSERT_EQ(true, tree.find(nums[j]));
+    }
+  }
+}
+
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
