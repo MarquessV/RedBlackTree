@@ -1,4 +1,5 @@
 #include "red_black_tree.hpp"
+#include <climits>
 #include <gtest/gtest.h>
 
 TEST(InsertTest, InsertFind) {
@@ -96,6 +97,25 @@ TEST(RemoveTest, RemoveSuccess) {
     for(unsigned int j = i+1; j < nums.size(); j++) {
       ASSERT_EQ(true, tree.find(nums[j]));
     }
+  }
+}
+
+TEST(RandomTest, RandomSuccess) {
+  srand(time(NULL));
+  red_black_tree<int> tree;
+  vector<int> nums;
+  for(size_t i = 0; i < 10000; i++) {
+    int x = rand() % UINT_MAX;
+    if(tree.insert(x)) {
+      nums.push_back(x);
+    }
+  }
+  for(int x : nums) {
+    ASSERT_EQ(true, tree.find(x));
+  }
+  for(int x : nums) {
+    tree.remove(x);
+    ASSERT_EQ(false, tree.find(x));
   }
 }
 

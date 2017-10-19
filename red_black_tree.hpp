@@ -170,8 +170,12 @@ class red_black_tree {
        
         ~red_black_tree_node()
         {
-          delete left;
-          delete right;
+          if(left) {
+            delete left;
+          }
+          if(right) {
+            delete right;
+          }
         }
     };
     
@@ -251,8 +255,10 @@ class red_black_tree {
         parent->setRed();
         sibling->setBlack();
         parent->rotateLeft();
-        if(root == parent) {
-          root = sibling;
+        if(root->parent) {
+          while(root->parent) {
+            root = root->parent;
+          }
         }
         // Since we've rotated, node has a new sibling and we update accordingly.
         if(node) {
@@ -286,14 +292,18 @@ class red_black_tree {
           sibling->setRed();
           sibling->left->setBlack();
           sibling->rotateRight();
-          if(root == parent) {
-            root = parent->left;
+          if(root->parent) {
+            while(root->parent) {
+              root = root->parent;
+            }
           } else if(parent->right == node && sibling->right && sibling->right->isRed() && (!sibling->left || sibling->left->isBlack())) {
             sibling->setRed();
             sibling->right->setBlack();
             sibling->rotateLeft();
-            if(root == parent) {
-              root = parent->right;
+            if(root->parent) {
+              while(root->parent) {
+                root = root->parent;
+              }
             }
           }
           // Again, since we (possibly) rotated, we update the sibling.
@@ -312,13 +322,17 @@ class red_black_tree {
         sibling->right->setBlack();
         if(parent->left == curr) {
           parent->rotateLeft();
-          if(root == parent) {
-            root = parent->right;
+          if(root->parent) {
+            while(root->parent) {
+              root = root->parent;
+            }
           }
         } else {
           parent->rotateRight();
-          if(root == parent) {
-            root = parent->left;
+          if(root->parent) {
+            while(root->parent) {
+              root = root->parent;
+            }
           }
         }
       }
@@ -412,6 +426,10 @@ class red_black_tree {
         } else {
           curr->parent->right = nullptr;
         }
+        /*
+        curr->left = nullptr;
+        curr->right = nullptr;
+        */
         delete curr;
         return true;
       }
@@ -426,9 +444,9 @@ class red_black_tree {
       // We replace the node with its child node.
       if(curr == root) {
         root = child;
-      } else if(curr->parent->left == curr) {
+      } else if(child != root && curr->parent->left == curr) {
         curr->parent->left = child;
-      } else {
+      } else if(child != root) {
         curr->parent->right = child;
       }
       _size--;
@@ -508,9 +526,10 @@ class red_black_tree {
     }
 
     ~red_black_tree() {
-      delete root;
+      if(root) {
+        delete root;
+      }
     }
-
 };
 
 #endif
