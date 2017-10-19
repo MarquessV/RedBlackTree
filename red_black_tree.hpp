@@ -66,7 +66,7 @@ class red_black_tree {
 
         inline red_black_tree_node* getSibling()
         {
-          red_black_tree_node* p = this->getParent();
+          red_black_tree_node* p = this->parent;
           if(p) {
             if(p->left == this) {
               return p->right;
@@ -94,6 +94,15 @@ class red_black_tree {
             return gp->left;
           }
           return nullptr;
+        }
+
+        inline red_black_tree_node* getPredecessor()
+        {
+          red_black_tree_node* curr = this->left;
+          while(curr->right) {
+            curr = curr->right; 
+          }
+          return curr;
         }
 
         inline red_black_tree_node* getSuccessor()
@@ -245,11 +254,11 @@ class red_black_tree {
         if(root == parent) {
           root = sibling;
         }
-        // Since we've rotated, node has a new sibling and we upadte accordingly.
+        // Since we've rotated, node has a new sibling and we update accordingly.
         if(node) {
           sibling = node->getSibling();
         } else {
-          sibling = parent->left ? parent->left : parent->right;
+          sibling = (parent->left ? parent->left : parent->right);
         }
       }
       // Case 3: The nodes parent is black, and both of siblings children is black.
@@ -261,11 +270,17 @@ class red_black_tree {
       // Case 4: The nodes parent is red, its sibling is black, and both its children are black
       if(parent->isRed() && sibling && sibling->isBlack() && (!sibling->left || sibling->left->isBlack()) && (!sibling->right || sibling->right->isBlack())) {
         parent->setBlack();   // By swapping colors, we've made up for the missing black node on the path of node, but
-        sibling->setRed();    // haven't effected the path through the sibling.
+        if(parent->left) {
+          parent->left->setRed();
+        }
+        if(parent->right) {
+          parent->right->setRed();
+        }
+        //sibling->setRed();    // haven't effected the path through the sibling.
         return;
       }
       // Case 5: The sibling is non null and black...
-      if(sibling && sibling->isBlack()) {
+      if(sibling && sibling->isBlack() && sibling->left && sibling->left->isRed()) {
         // With the node on its parents left side, and siblings right child black and its left child red.
         if(parent->left == node && (!sibling->right || sibling->right->isBlack()) && sibling->left && sibling->left->isRed()) {
           sibling->setRed();
@@ -286,7 +301,7 @@ class red_black_tree {
             sibling = node->getSibling();
           }
           else {
-            sibling = parent->left ? parent->left : parent->right;
+            sibling = (parent->left ? parent->left : parent->right);
           }
         }  
       }
@@ -295,7 +310,7 @@ class red_black_tree {
         sibling->color = parent->color;
         parent->setBlack();
         sibling->right->setBlack();
-        if(parent->left == node) {
+        if(parent->left == curr) {
           parent->rotateLeft();
           if(root == parent) {
             root = parent->right;
@@ -378,29 +393,29 @@ class red_black_tree {
       if(!curr) {
         return false;
       }
-      // If there are two non-null children, replace with the value of inorder successor and delete the successor.
+      if(_size == 1) {
+        delete curr;
+        root = nullptr;
+        _size--;
+        return true;
+      }
+      // If there are two non-null children, replace with the value of inorder predecessor and delete the predecessor.
       if(curr->left && curr->right) {
-        red_black_tree_node *successor = curr->getSuccessor();
-        curr->data = successor->data;
-        if(successor->parent->left == successor) { // Null out the successors parent pointer to the successor.
-          successor->parent->left = nullptr;
-        } else {
-          successor->parent->right = nullptr;
-        }
-        curr = successor;
+        red_black_tree_node *predecessor = curr->getPredecessor();
+        curr->data = predecessor->data;
+        curr = predecessor;
       }
       if(curr->isRed()) {
         _size--;
+        if(curr == curr->parent->left) {
+          curr->parent->left = nullptr;
+        } else {
+          curr->parent->right = nullptr;
+        }
         delete curr;
         return true;
       }
-      // We replace the node with its child node.
       red_black_tree_node *child = (curr->right ? curr->right : curr->left);
-      if(curr->parent->left == curr) {
-        curr->parent->left = child;
-      } else {
-        curr->parent->right = child;
-      }
       if(!child || child->isBlack()) {  // If the child is black, we need to perform some number of the 6 "double-back" transformations.
         remove_repair(child, curr); // Since multiple "repairs" may need to be done we use a seperate recursive function.
       }
@@ -408,8 +423,19 @@ class red_black_tree {
         child->parent = curr->parent;
         child->setBlack();
       }
-      // Finally, we delete the node.
+      // We replace the node with its child node.
+      if(curr == root) {
+        root = child;
+      } else if(curr->parent->left == curr) {
+        curr->parent->left = child;
+      } else {
+        curr->parent->right = child;
+      }
       _size--;
+      // Set currs children to null, since destructor would destroy its former children otherwise.
+      curr->left = nullptr;
+      curr->right = nullptr;
+      // Finally, we delete the node.
       delete curr;
       return true;
     }

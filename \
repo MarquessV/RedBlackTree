@@ -93,6 +93,11 @@ TEST(RemoveTest, RemoveSuccess) {
     ASSERT_EQ(true, tree.remove(nums[i]));
     ASSERT_EQ(false, tree.find(nums[i]));
     ASSERT_EQ(nums.size()-i-1, tree.size());
+    vector<pair<int,bool>> dump = tree.dump();
+    for(pair<int,bool> p : dump) {
+      cout << p.first << " " << (p.second == true ? "black" : "red") << '\t';
+    }
+    cout << endl;
     for(unsigned int j = i+1; j < nums.size(); j++) {
       ASSERT_EQ(true, tree.find(nums[j]));
     }
