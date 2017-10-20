@@ -3,7 +3,7 @@ This is an implementation of the red black tree data structure in C++. I did thi
 
 ## Usage
 
-Make sure to include red_black_tree.hpp
+Make sure to include red_black_tree.hpp in your source.
 
 To create an empty tree of type T you can write:
 ```C++
