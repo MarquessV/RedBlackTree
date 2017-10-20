@@ -1,5 +1,5 @@
 # RedBlackTree
-This is an implementation of the red black tree data structure in C++. I did this as an educational exercise and as an opportunity to try out Google Test. It works and supports all the methods you would expect. However, the C++ standard library includes red black tree based implementations of set, multiset, map, and multimap would probably be more appropriate choices for serious projects. Still, this code can be used as a reference if you are having trouble understanding red black trees.
+This is an implementation of the red black tree data structure in C++. I did this as an educational exercise and as an opportunity to try out Google Test. It works and supports all the methods you would expect. However, the C++ standard library includes red black tree based implementations of set, multiset, map, and multimap that would probably be more appropriate choices for serious projects. Still, this code can be used as a reference if you are having trouble understanding red black trees.
 
 ## Usage
 
