@@ -36,7 +36,7 @@ You can check how many elements are in the tree with:
 tree.size();
 ```
 
-Finally you can dump the tree with:
+Finally, you can dump the tree with:
 ```C++
 tree.dump();
 ```
